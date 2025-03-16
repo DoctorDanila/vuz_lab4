@@ -11,12 +11,16 @@ public class LabTasks
     public static List<int> RemoveElements()
     {
         Console.WriteLine("Введите список через пробел:");
-        var input = Console.ReadLine().Split(' ').Select(int.Parse).ToList();
+        string[] inputStrings = Console.ReadLine().Split(' ');
+        List<int> input = new List<int>();
+
+        foreach (string s in inputStrings) input.Add(int.Parse(s));
 
         Console.WriteLine("Какой элемент вы хотите удалить:");
         int elementToRemove = int.Parse(Console.ReadLine());
 
-        input.RemoveAll(x => x == elementToRemove);
+        for (int i = input.Count - 1; i >= 0; i--)
+            if (input[i] == elementToRemove) input.RemoveAt(i);
         return input;
     }
 
@@ -48,7 +52,10 @@ public class LabTasks
             string schoolName = Console.ReadLine();
 
             Console.WriteLine($"Введите компании, в которых купила школа {schoolName} (через запятую):");
-            var purchasedFrom = Console.ReadLine().Split(',').Select(s => s.Trim()).ToList();
+            string[] purchasedFromRaw = Console.ReadLine().Split(',');
+            List<string> purchasedFrom = new List<string>();
+
+            foreach (string company in purchasedFromRaw) purchasedFrom.Add(company.Trim());
 
             schools.Add(new School { Name = schoolName, PurchasedFrom = purchasedFrom });
         }
@@ -58,14 +65,20 @@ public class LabTasks
         foreach (var school in schools) Console.WriteLine($"{school.Name} закупал в компаниях: {string.Join(", ", school.PurchasedFrom)}");
 
         // 2. в каких компаниях производилась закупка хотя бы одной школой
-        var allPurchasedFrom = schools.SelectMany(s => s.PurchasedFrom).Distinct();
+        HashSet<string> allPurchasedFrom = new HashSet<string>();
+        foreach (var school in schools)
+            foreach (var company in school.PurchasedFrom) allPurchasedFrom.Add(company);
+
         Console.WriteLine("Компании, где производилась закупка: " + string.Join(", ", allPurchasedFrom));
 
         // 3. в каких компаниях никто не покупал
         Console.WriteLine("Введите список всех компаний (через запятую):");
-        var allCompanies = new HashSet<string>(Console.ReadLine().Split(',').Select(s => s.Trim()));
-        var purchasedCompanies = new HashSet<string>(allPurchasedFrom);
-        var noPurchaseCompanies = allCompanies.Except(purchasedCompanies);
+        string[] allCompaniesRaw = Console.ReadLine().Split(',');
+        HashSet<string> allCompanies = new HashSet<string>();
+        foreach (string company in allCompaniesRaw) allCompanies.Add(company.Trim());
+        HashSet<string> purchasedCompanies = new HashSet<string>(allPurchasedFrom);
+        HashSet<string> noPurchaseCompanies = new HashSet<string>(allCompanies);
+        noPurchaseCompanies.ExceptWith(purchasedCompanies);
         Console.WriteLine("Компании без закупок: " + string.Join(", ", noPurchaseCompanies));
     }
 
@@ -74,7 +87,7 @@ public class LabTasks
     {
         string filePath = "./words.txt";
 
-        if (!File.Exists(filePath))
+        if (!File.Exists(filePath)) 
         {
             Console.WriteLine("Файл не найден.");
             return;
@@ -84,12 +97,17 @@ public class LabTasks
         string[] sonorConsonants = { "б", "в", "г", "д", "ж", "з", "л", "м", "н", "р" };
         var words = text.ToLower().Split(new char[] { ' ', '.', ',', '!', '?', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
 
-        var uniqueSonorConsonants = words
-            .SelectMany(word => word)
-            .Where(c => sonorConsonants.Contains(c.ToString())) 
-            .Distinct() 
-            .OrderBy(c => c) 
-            .ToList();
+        // Создаем пустое множество для хранения уникальных звонких согласных
+        var uniqueSonorConsonants = new SortedSet<char>();
+
+        // Итерируем по каждому слову
+        foreach (var word in words)
+            // Итерируем по каждой букве в слове
+            foreach (var c in word)
+                // Проверяем, является ли буква звонкой согласной
+                if (Array.IndexOf(sonorConsonants, c.ToString()) != -1)
+                    // Добавляем в множество, если она там еще не есть
+                    uniqueSonorConsonants.Add(c);
 
         Console.WriteLine("Звонкие согласные, встречающиеся хотя бы в одном слове, в алфавитном порядке:");
         Console.WriteLine(string.Join(", ", uniqueSonorConsonants));
